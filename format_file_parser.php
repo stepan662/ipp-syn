@@ -15,11 +15,9 @@ final class FormatFileParser
   public static function parse($format_file)
   {
     $ret = array();
-    while(($line = fgets($format_file)) !== false)
-    {
+    while(($line = fgets($format_file)) !== false) {
       $tab = 0;
-      if(($tab = strpos($line, "\t")) === false)
-      {
+      if(($tab = strpos($line, "\t")) === false) {
         //radek neobsahuje tabulator
         throw new Exception("Unknown format of format file", 4);
       }
@@ -56,6 +54,14 @@ final class FormatFileParser
       ")" => ")",
     );
 
+    //operatory
+    $operators = array(
+      "." => "",
+      "|" => "|",
+      "*" => "*",
+      "+" => "+",
+    );
+
     //znaky, ktere maji specialni vyznam
     $escape = array(
       "." => true,
@@ -64,20 +70,6 @@ final class FormatFileParser
       "+" => true,
       "(" => true,
       ")" => true,
-      "{" => true,
-      "}" => true,
-      "[" => true,
-      "]" => true,
-      "^" => true,
-      "$" => true,
-      "?" => true,
-      ":" => true,
-      "/" => true,
-      "\\" => true,
-    );
-
-    //znaky, ktere maji specialni vyznam, ale my je nepouzivame - musime je escapovat
-    $autoEscape = array(
       "{" => true,
       "}" => true,
       "[" => true,
@@ -104,133 +96,187 @@ final class FormatFileParser
       "." => "\\.",
     );
 
-    $state = "wait";
+    $state = "char";
     $str = str_split($expr);
     $ret = "";
 
     //v pripade negace se musi upravit vystup
     $inNegation = false;
 
-    for($i = 0; $i < count($str); $i++)
-    {
+    for($i = 0; $i < count($str); $i++) {
       $char = $str[$i];
       //32 = znak mezery, bereme jen znaky vetsi (ze zadani)
-      if(ord($char) < 32)
-      {
+      if(ord($char) < 32) {
         throw new Exception("Unsupported characters in regular expression", 4);
       }
+      //echo $ret . "\n";
+      //echo $state . "($char)\n";
+
       switch($state)
       {
-        //cekame na escapovaci znak
-        case "wait":
-          if($char == "%")
-          {
+        //cekame pouze znak nebo skupinu znaku ne operator
+        case "char":
+          if($char == "!") {
+            $state = "negation";
+          }
+          elseif($char == "%") {
             $state = "escape";
           }
-          elseif($char == "!")
-          {
-            $state = "negate";
+          elseif(isset($operators[$char])) {
+            throw new Exception("Unexpected operator '$char'", 4);
           }
-          elseif(isset($meta[$char]))
-          {
-            if($char == ")" and $inNegation)
-            {
-              $ret.="]";
-              $meta["|"] = "|";
-              $inNegation = false;
-            }
-            else
-            {
-              $ret.= $meta[$char];
-            }
-          }
-          elseif(isset($autoEscape[$char]))
-          {
-            $ret.="\\" . $char;
-          }
-          else
-          {
-            $ret.=$char;
+          else {
+            $state = "charOperator";
+            $ret.=self::esc($char);
           }
           break;
 
-        //prvadime escapovani
-        case "escape":
-          if(isset($special[$char]))
-          {
-            $ret.= "[" . $special[$char] . "]";
+        //ocekavame cokoliv
+        case "charOperator":
+          if($char == "!") {
+            $state = "negation";
           }
-          elseif(isset($meta[$char]))
-          {
-            if(in_array($char, $meta))
-            {
+          elseif($char == "%") {
+            $state = "escape";
+          }
+          elseif($char == "." or $char == "|") {
+            $ret.=$operators[$char];
+            $state = "char";
+          }
+          else {
+            $ret.=self::esc($char);
+          }
+          break;
+
+        //escapujeme nebo nahrazujeme specialni skupinou
+        case "escape":
+          if(isset($meta[$char])) {
+            $state = "charOperator";
+            if(isset($escape[$char])) {
               $ret.="\\" . $char;
             }
-            else
-            {
-              $ret .= $char;
+            else {
+              $ret.=$char;
             }
           }
-          else
-          {
-            if(isset($escape[$char]))
-            {
-              $ret.="%\\" . $char;
-            }
-            else
-            {
-              $ret .= "%" . $char;
-            }
+          elseif(isset($special[$char])) {
+            $state = "charOperator";
+            $ret.= "[" . $special[$char] . "]";
           }
-          $state = "wait";
+          else {
+            $state = "charOperator";
+            $ret.="%" . self::esc($char);
+          }
           break;
 
-        //prevadime negaci
-        case "negate":
-          if($char == "%")
-          {
-            $state = "negGroup";
-          }
-          elseif($char === "(")
-          {
+        //negace
+        case "negation":
+          if($char == "%") {
+            $state = "negEscapeOne";
             $ret.="[^";
-            $state = "wait";
-            
-            //znak | se pri negaci nepouzivat
-            $meta["|"] = "";
-            $inNegation = TRUE;
           }
-          elseif(!isset($meta[$char]) and $char != "!")
-          {
-            if(isset($escape[$char]))
-            {
-              $ret.= "[^\\" . $char . "]";
-            }
-            else
-            {
-              $ret.= "[^" . $char . "]";
-            }
-            $state = "wait";
+          elseif($char == "(") {
+            $state = "negChar";
+            $ret.="[^";
           }
-          else
-          {
-            $state = "wait";
+          else {
+            $state = "charOperator";
+            $ret.="[^" . self::esc($char) . "]";
           }
           break;
 
-        //negace skupiny
-        case "negGroup":
-          if(isset($special[$char]))
-          {
-            $ret.= "[^" . $special[$char] . "]";
+        //escapujeme jeden negovany znak
+        case "negEscapeOne":
+          if(isset($meta[$char])) {
+            $state = "charOperator";
+            if(isset($escape[$char])) {
+              $ret.="\\" . $char . "]";
+            }
+            else {
+              $ret.=$char . "]";
+            }
           }
-          $state = "wait";
+          elseif(isset($special[$char])) {
+            $state = "charOperator";
+            $ret.= $special[$char] . "]";
+          }
+          else {
+            throw new Exception("Unexpected negation", 4);
+          }
+          break;
+
+        case "negEscape":
+          if(isset($meta[$char])) {
+            $state = "negOperator";
+            if(isset($escape[$char])) {
+              $ret.="\\" . $char;
+            }
+            else {
+              $ret.=$char;
+            }
+          }
+          else {
+            throw new Exception("Unexpected negation", 4);
+          }
+          break;
+
+        case "negChar":
+          if($char == "%") {
+            $state = "negEscape";
+          }
+          elseif(isset($operators[$char])) {
+            throw new Exception("Unexpected operator", 4);
+          }
+          else {
+            $ret.=self::esc($char);
+            $state = "negOperator";
+          }
+          break;
+
+        case "negOperator":
+          if($char == "|") {
+            $state = "negChar";
+          }
+          elseif($char == ")") {
+            $state = "charOperator";
+            $ret.="]";
+          }
+          else {
+            throw new Exception("Unexpected character", 4);
+          }
           break;
       }
     }
 
+    if($state != "charOperator") {
+      throw new Exception("Unexpected end of regexp", 4);
+    }
+
     $ret = "/" . $ret . "/";
     return $ret;
+  }
+
+  private static function esc($char)
+  {
+    //znaky, ktere maji specialni vyznam, ale my je nepouzivame - musime je escapovat
+    static $autoEscape = array(
+      "{" => true,
+      "}" => true,
+      "[" => true,
+      "]" => true,
+      "^" => true,
+      "$" => true,
+      "?" => true,
+      ":" => true,
+      "/" => true,
+      "\\" => true,
+    );
+    if(isset($autoEscape[$char])) {
+      return "\\" . $char;
+    }
+    else {
+      return $char;
+    }
   }
 
   /**
@@ -260,27 +306,22 @@ final class FormatFileParser
 
     //rozdeleni podle carky
     $arr = explode(",", trim($args));
-    foreach($arr as $arg)
-    {
+    foreach($arr as $arg) {
       //rozdeleni podle dvojtecky
       $parArr = explode(":", $arg);
-      if(count($parArr) == 1)
-      {
+      if(count($parArr) == 1) {
         //znacka bez argumentu
         $mark = trim($parArr[0]);
-        if(isset($tagsNoArg[$mark]))
-        {
+        if(isset($tagsNoArg[$mark])) {
           $ret[] = new HtmlUnit("<" . $tagsNoArg[$mark] . ">", "b", $tagsNoArg[$mark]);
           continue;
         }
       }
-      elseif(count($parArr) == 2)
-      {
+      elseif(count($parArr) == 2) {
         //znacka s argumetem
         $mark = trim($parArr[0]);
         $value = trim($parArr[1]);
-        if(isset($tagsWithArg[$mark]))
-        {
+        if(isset($tagsWithArg[$mark])) {
           $ret[] = call_user_func_array($tagsWithArg[$mark], array($value));
           continue;
         }
@@ -294,8 +335,7 @@ final class FormatFileParser
   //kontroluje format velikosti pisma a prevadi ho na spravny format
   private static function parseSizeTag($param)
   {
-    if(preg_match("/[1-7]/", $param))
-    {
+    if(preg_match("/^[1-7]$/", $param)) {
       return new HtmlUnit("<font size=$param>", "b", "font");
     }
     throw new Exception("Value '$param' of parameter 'size' is not valid", 4);
@@ -304,8 +344,7 @@ final class FormatFileParser
   //kontroluje format barvy
   private static function parseColorTag($param)
   {
-    if(preg_match("/[0-9a-fA-F]{6}/i", $param))
-    {
+    if(preg_match("/^[0-9a-fA-F]{6}$/i", $param)) {
       return new HtmlUnit("<font color=#$param>", "b", "font");
     }
     throw new Exception("Value '$param' of parameter 'color' is not valid", 4);
