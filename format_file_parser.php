@@ -144,10 +144,6 @@ final class FormatFileParser
               $ret.= $meta[$char];
             }
           }
-          elseif($char == ".")
-          {
-            $state = "dot";
-          }
           elseif(isset($autoEscape[$char]))
           {
             $ret.="\\" . $char;
@@ -177,7 +173,6 @@ final class FormatFileParser
           }
           else
           {
-
             if(isset($escape[$char]))
             {
               $ret.="%\\" . $char;

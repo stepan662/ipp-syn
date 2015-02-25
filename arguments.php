@@ -25,13 +25,14 @@ class Arguments
     array_shift($argv);           //prvni argument zahodime(nazev skriptu)
 
     //musime vyresit chybu s rozpojovanim argumentu (kdyz jsou v nazvu mezery)
-    $argv = $this->solveApostrofs($argv);
+    //$argv = $this->solveApostrofs($argv);
 
     //nacteme argumenty
     $argsAll = $this->arguments($argv);
 
     if(!empty($argsAll['other']))
     {
+      var_dump($argv);
       throw new Exception("Unknown parameters", 1);
     }
 
@@ -64,7 +65,7 @@ class Arguments
       if(isset($args['input']))
       {
         $input = str_replace(" ", "\x20", $args['input']);
-        if(file_exists($input) and ( $handle = fopen($input, "r")) !== NULL)
+        if(file_exists($input) and ( $handle = fopen($input, "r")) !== FALSE)
         {
           $this->input_file = $handle;
         }
@@ -82,7 +83,7 @@ class Arguments
       if(isset($args['output']))
       {
         $output = str_replace(" ", "\x20", $args['output']);
-        if(($handle = fopen($output, "w")) !== NULL)
+        if(($handle = @fopen($output, "w")) !== FALSE)
         {
           $this->output_file = $handle;
         }
@@ -255,7 +256,7 @@ class Arguments
       {
         if(!isset($params[$paramName]))
         {
-          $paramValue = substr($par, $iEql + 1, strlen($par) - $iEql - 1);
+          $paramValue = trim(substr($par, $iEql + 1, strlen($par) - $iEql - 1), "'\"");
           $params[$paramName] = $paramValue;
           return true;
         }
@@ -317,7 +318,7 @@ class Arguments
         if(!isset($params[$paramName]))
         {
           $paramValue = substr($par, $iEql + 1, strlen($par) - $iEql - 1);
-          $params[$paramName] = $paramValue;
+          $params[$paramName] = trim($paramValue, "'\"");
           return true;
         }
         else
