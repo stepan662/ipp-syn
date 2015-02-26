@@ -205,6 +205,7 @@ final class FormatFileParser
           }
           break;
 
+        //escapovani jednoho znaku v negovane zavorce
         case "negEscape":
           if(isset($meta[$char])) {
             $state = "negOperator";
@@ -220,6 +221,7 @@ final class FormatFileParser
           }
           break;
 
+        //ocekavame znak nebo escapovany znak
         case "negChar":
           if($char == "%") {
             $state = "negEscape";
@@ -233,6 +235,7 @@ final class FormatFileParser
           }
           break;
 
+        //ocekavame znak | nebo ) - jen tyto se mohou nachazet v negovane zavorce
         case "negOperator":
           if($char == "|") {
             $state = "negChar";
