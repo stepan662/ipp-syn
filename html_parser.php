@@ -25,46 +25,36 @@ final class HtmlParser
     $open = array();          //zasobnik otevrenych tagu
     $suspend = array();       //zasobnik prerusenych tagu
     //scannerem rozsekame html na HtmlUnit (text nebo tag)
-    while(($unit = $scanner->getUnit()) !== false)
-    {
-      if($unit->isEnd())
-      {
+    while(($unit = $scanner->getUnit()) !== false) {
+      if($unit->isEnd()) {
         //jde o ukoncovaci tag - vyhledame v zasobniku otevrenych
-        if(self::unit_in_array($unit, $open))
-        {
+        if(self::unit_in_array($unit, $open)) {
           //pokud neni na vrcholu, musime ukoncit vsechny predchozi
           // a presunout je do prerusenych
-          while(!$unit->isClosing($tmp = array_pop($open)))
-          {
+          while(!$unit->isClosing($tmp = array_pop($open))) {
             $ret.=$tmp->getCloseTag();
             $suspend[] = $tmp;
           }
           $ret.=$tmp->getCloseTag();
         }
-        elseif(self::unit_in_array($unit, $suspend))
-        {
+        elseif(self::unit_in_array($unit, $suspend)) {
           //pokud je v seznamu prerusenych, tak je oba zahodime
-          for($i = count($suspend) - 1; $i >= 0; $i--)
-          {
-            if($suspend[$i]->getName() == $unit->getName())
-            {
+          for($i = count($suspend) - 1; $i >= 0; $i--) {
+            if($suspend[$i]->getName() == $unit->getName()) {
               unset($suspend[$i]);
             }
           }
         }
       }
-      elseif($unit->isBegin() and ! $unit->isClosed())
-      {
+      elseif($unit->isBegin() and ! $unit->isClosed()) {
         //pokud je oteviraci a neni samouzaviraci, dame do otevrenych
         $open[] = $unit;
         $ret.=$unit->getHtml();
       }
-      else
-      {
+      else {
         //pokud jde o retezec, musime obnovit vsechny prerusene tagy
         // a pridat je do otevrenych
-        while(!empty($suspend))
-        {
+        while(!empty($suspend)) {
           $tmp = array_pop($suspend);
           $ret.= $tmp->getHtml();
           $open[] = $tmp;
@@ -75,8 +65,7 @@ final class HtmlParser
 
     //budeme slusni uzavreme zbyle otevrene tagy
     // ale nemelo by se to stavat!!!
-    while(!empty($open))
-    {
+    while(!empty($open)) {
       $tmp = array_pop($open);
       $ret.= $tmp->getHtml();
     }
@@ -92,8 +81,7 @@ final class HtmlParser
    */
   private function unit_in_array($unit, $arr)
   {
-    foreach(array_reverse($arr) as $tmp)
-    {
+    foreach(array_reverse($arr) as $tmp) {
       if($tmp->getName() == $unit->getName())
         return true;
     }

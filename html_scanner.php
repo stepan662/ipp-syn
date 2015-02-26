@@ -26,49 +26,41 @@ class HtmlScanner
     $name = "";
 
     //jsme na konci souboru a nemame co vratit
-    if($this->index >= count($this->file))
-    {
+    if($this->index >= count($this->file)) {
       return false;
     }
 
     $state = "begin";
-    while($state !== "done")
-    {
-      if($this->index >= count($this->file))
-      {
+    while($state !== "done") {
+      if($this->index >= count($this->file)) {
         $this->index++;
         break;
       }
-      
+
       $char = $this->file[$this->index];
-      
+
       //echo "$state($char)\n";
 
       switch($state)
       {
         case "begin":
           $html .= $char;
-          if($char == "<")
-          {
+          if($char == "<") {
             $state = "tagBegin";
           }
-          else
-          {
+          else {
             $state = "text";
           }
           break;
 
         case "tagBegin":
           $html .= $char;
-          if(!ctype_space($char))
-          {
-            if($char === "/")
-            {
+          if(!ctype_space($char)) {
+            if($char === "/") {
               $type = "e";  //tag je ukoncovaci
               $state = "nameBegin";
             }
-            else
-            {
+            else {
               $type = "b";  //tag je oteviraci
               $state = "name";
               $name.=$char;
@@ -78,8 +70,7 @@ class HtmlScanner
 
         case "nameBegin":
           $html .= $char;
-          if(!ctype_space($char))
-          {
+          if(!ctype_space($char)) {
             $state = "name";
             $name.=$char;
           }
@@ -87,36 +78,30 @@ class HtmlScanner
 
         case "name":
           $html .= $char;
-          if(!ctype_space($char) and $char !== ">")
-          {
+          if(!ctype_space($char) and $char !== ">") {
             $name.=$char;
           }
-          elseif($char === ">")
-          {
+          elseif($char === ">") {
             $state = "done";
           }
-          else
-          {
+          else {
             $state = "afterName";
           }
           break;
 
         case "afterName":
           $html .= $char;
-          if($char === ">")
-          {
+          if($char === ">") {
             $state = "done";
           }
           break;
 
         case "text":
-          if($char === "<")
-          {
+          if($char === "<") {
             $state = "done";
             $this->index--;
           }
-          else
-          {
+          else {
             $html .= $char;
           }
           break;
@@ -125,12 +110,10 @@ class HtmlScanner
       $this->index++;
     }
 
-    if($state == "done")
-    {
+    if($state == "done") {
       return new HtmlUnit($html, $type, $name);
     }
-    else
-    {
+    else {
       return new HtmlUnit($html, "t");
     }
   }

@@ -20,6 +20,7 @@ class HtmlUnit
    * @param type $type Typ tagu: t - text, b - pocatecni, e - uzaviraci
    * @param type $name Pouze nazev tagu napr 'font'
    */
+
   function __construct($html, $type, $name = "")
   {
     $this->type = $type;
@@ -97,12 +98,10 @@ class HtmlUnit
    */
   function getCloseTag()
   {
-    if($this->type == 'b')
-    {
+    if($this->type == 'b') {
       return "</" . $this->name . ">";
     }
-    else
-    {
+    else {
       return "";
     }
   }

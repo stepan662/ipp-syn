@@ -7,7 +7,6 @@
  * Provadi nektere kontroly a spousti dalsi moduly
  * @author stepan
  */
-
 include_once 'arguments.php';
 include_once 'format_file_parser.php';
 include_once 'source_formatter.php';
@@ -22,8 +21,8 @@ main($argv);
 
 function main($argv)
 {
-  mb_internal_encoding ("utf-8");
-  
+  mb_internal_encoding("utf-8");
+
   $STDERR = fopen('php://stderr', 'w+');
 
   //zpracovani argumentu programu
@@ -39,8 +38,7 @@ function main($argv)
   }
 
   //vypis napovedy
-  if($args->isHelp())
-  {
+  if($args->isHelp()) {
     print_help();
     return;
   }
@@ -49,15 +47,14 @@ function main($argv)
   //zpracovani formatovaciho souboru
   //v regularnich vyrazech jsou take escapovany html znacky
   $formatArr = array();
-  if($args->getFormatFile() !== null)
-  {
+  if($args->getFormatFile() !== null) {
     try
     {
       $formatArr = FormatFileParser::parse($args->getFormatFile());
     }
     catch(Exception $e)
     {
-      fwrite($STDERR,  $e->getMessage() . "\n");
+      fwrite($STDERR, $e->getMessage() . "\n");
       exit($e->getCode());
     }
   }
@@ -66,17 +63,15 @@ function main($argv)
   //nacteni celeho zdrojoveho souboru a esapovani html znacek
   $file = "";
   $handle = $args->getInputFile();
-  while(($line = fgets($handle)) !== false)
-  {
+  while(($line = fgets($handle)) !== false) {
     $file.= htmlspecialchars($line, ENT_NOQUOTES);
   }
 
-  
+
   //formatovani souboru podle formatovaciho pole
   $sourceFormatter = new SourceFormatter($formatArr, $file);
   $out = $file;
-  if($args->getFormatFile() !== null)
-  {
+  if($args->getFormatFile() !== null) {
     try
     {
       $out = $sourceFormatter->getSource();
@@ -89,20 +84,17 @@ function main($argv)
   }
 
   //validace html znacek
-  if($args->isValidate())
-  {
+  if($args->isValidate()) {
     $out = HtmlParser::validate($out);
   }
-  
+
   //prevedeni html znacek zpet, v pripade ze nemaji byt escapovany
-  if(!$args->isEscape())
-  {
+  if(!$args->isEscape()) {
     $out = htmlspecialchars_decode($out, ENT_NOQUOTES);
   }
-  
+
   //vlozeni html novych radku
-  if($args->isBr())
-  {
+  if($args->isBr()) {
     $out = str_replace("\n", "<br />\n", $out);
   }
 

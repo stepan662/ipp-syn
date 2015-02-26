@@ -6,7 +6,6 @@
  * Provadi vkladani html tagu do zdrojoveho souboru
  * @author stepan
  */
-
 include_once 'format_unit.php';
 
 class HtmlInserter
@@ -20,6 +19,7 @@ class HtmlInserter
    * Nastavime vystupni soubor a vynulujeme indexy
    * @param string $source vystupni retezec
    */
+
   public function __construct(&$source)
   {
     $this->source = &$source;
@@ -36,22 +36,21 @@ class HtmlInserter
    */
   public function insert(&$format, $begin, $length)
   {
-    if($begin < $this->iText)
-    {
+    if($begin < $this->iText) {
       throw new Exception("Index $begin is lower than $this->iText");
     }
-    
+
     $this->findRealIndexLast($begin);
-    
+
     $this->insertToIndex($this->iReal, $format->getFirstPart());
-    
-    $this->findRealIndexFirst($this->iText+$length);
-    
+
+    $this->findRealIndexFirst($this->iText + $length);
+
     $this->insertToIndex($this->iReal, $format->getSecondPart());
-    
+
     $out = &$this->source;
   }
-  
+
   /**
    * Na dany index vlozi retezec
    * 
@@ -73,8 +72,7 @@ class HtmlInserter
   {
     $state = "inText";
     $in = str_split($this->source);
-    while($this->iText <= $index)
-    {
+    while($this->iText <= $index) {
       $char = $in[$this->iReal];
       //echo "$state($char)\t";
       //echo "iText: $this->iText, iReal: $this->iReal \t";
@@ -83,36 +81,32 @@ class HtmlInserter
       switch($state)
       {
         case "inText":
-          if($char == "<")
-          {
+          if($char == "<") {
             $this->iReal++;
             $state = "inTag";
           }
-          else
-          {
+          else {
             $this->iReal++;
             $this->iText++;
           }
           break;
         case "inTag":
-          if($char == ">")
-          {
+          if($char == ">") {
             $this->iReal++;
             $state = "inText";
           }
-          else
-          {
+          else {
             $this->iReal++;
           }
           break;
       }
     }
     $this->iReal--;
-    if($index != $this->iText)
-    {
+    if($index != $this->iText) {
       $this->iText--;
     }
   }
+
   /**
    * Najde prvni index (pred html kodem), ktery vyhovuje indexu v textu
    * 
@@ -122,8 +116,7 @@ class HtmlInserter
   {
     $state = "inText";
     $in = str_split($this->source);
-    while($this->iText < $index)
-    {
+    while($this->iText < $index) {
       $char = $in[$this->iReal];
       //echo "$state($char)\t";
       //echo "iText: $this->iText, iReal: $this->iReal \t";
@@ -132,25 +125,21 @@ class HtmlInserter
       switch($state)
       {
         case "inText":
-          if($char == "<")
-          {
+          if($char == "<") {
             $this->iReal++;
             $state = "inTag";
           }
-          else
-          {
+          else {
             $this->iReal++;
             $this->iText++;
           }
           break;
         case "inTag":
-          if($char == ">")
-          {
+          if($char == ">") {
             $this->iReal++;
             $state = "inText";
           }
-          else
-          {
+          else {
             $this->iReal++;
           }
           break;
