@@ -45,7 +45,7 @@ class Arguments
         $this->br = true;
       }
 
-      if(isset($args['validate'])) {
+      if(isset($args['nooverlap'])) {
         $this->validate = true;
       }
 
@@ -170,11 +170,11 @@ class Arguments
 
   private function arguments($args)
   {
-    $longSwithes = array("help", "br", "validate", "escape");
+    $longSwithes = array("help", "br", "nooverlap", "escape");
     $longParams = array("input", "output", "format");
 
     $shortSwithes = array("h" => "help", "b" => "br",
-      "v" => "validate", "e" => "escape");
+      "n" => "nooverlap", "e" => "escape");
     $shortParams = array("i" => "input", "o" => "output", "f" => "format");
 
     $ret = array(
