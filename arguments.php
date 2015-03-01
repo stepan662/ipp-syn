@@ -29,7 +29,7 @@ class Arguments
     $argsAll = $this->arguments($argv);
 
     if(!empty($argsAll['other'])) {
-      var_dump($argv);
+      //var_dump($argv);
       throw new Exception("Unknown parameters", 1);
     }
 
