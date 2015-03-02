@@ -23,8 +23,7 @@ class Arguments
   function __construct($argv)
   {
     array_shift($argv);           //prvni argument zahodime(nazev skriptu)
-    //musime vyresit chybu s rozpojovanim argumentu (kdyz jsou v nazvu mezery)
-    //$argv = $this->solveApostrofs($argv);
+
     //nacteme argumenty
     $argsAll = $this->arguments($argv);
 
@@ -124,48 +123,6 @@ class Arguments
   public function getOutputFile()
   {
     return $this->output_file;
-  }
-
-  //funkce spoji parametry, ktere byly chybne rozdelene
-  private function solveApostrofs($argv)
-  {
-    $argv = implode(" ", $argv);  //spojime do jednoho retezce
-    $argArr = str_split($argv);   //prevedeme na pole
-    $argv = array();
-
-    $arg = "";
-    $i = 0;
-    while($i < count($argArr)) {
-      if($argArr[$i] == "'") {
-        $i++;
-        while($i < count($argArr) and $argArr[$i] != "'") {
-          $arg.=$argArr[$i];
-          $i++;
-        }
-      }
-      elseif($argArr[$i] == "\"") {
-        $i++;
-        while($i < count($argArr) and $argArr[$i] != "\"") {
-          $arg.=$argArr[$i];
-          $i++;
-        }
-      }
-      elseif($argArr[$i] == " ") {
-        if($arg != "") {
-          $argv[] = $arg;
-          $arg = "";
-        }
-      }
-      else {
-        $arg.=$argArr[$i];
-      }
-      $i++;
-    }
-
-    if($arg != "") {
-      $argv[] = $arg;
-    }
-    return $argv;
   }
 
   private function arguments($args)
