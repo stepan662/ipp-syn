@@ -14,7 +14,17 @@ include_once 'html_parser.php';
 
 function print_help()
 {
-  echo "tisknu napovedu\n";
+  echo "Projekt do předmětu IPP - zvýrazňování syntaxe\n\n"
+      ."Volitelné argumenty:\n"
+      ."\t--format=filename určení formátovacího souboru.\n"
+      ."\t\tSoubor musí být v následujícím formátu:\n"
+      ."\t\t\t<regularni vyraz><tabulator><formatovani><novy radek>\n"
+      ."\t\t\t...\n"
+      ."\t--input=filename určení vstupního souboru\n"
+      ."\t--output=filename určení výstupního souboru\n"
+      ."\t--br přidá element <br /> na konec každého řádku\n"
+      ."\t--nooverlap validuje křížení html značek\n"
+      ."\t--escape escapuje html značky, které jsou ve vstupním souboru\n";
 }
 
 main($argv);
