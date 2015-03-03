@@ -27,9 +27,6 @@ final class FormatFileParser
       $expr = self::parseRegExpr($expr);
       $html = self::parseFormat($html);
 
-      //escapujeme html znacky
-      $expr = htmlspecialchars($expr, ENT_NOQUOTES);
-
       //echo $expr . "\n";
 
       $ret[] = new FormatUnit($expr, $html);

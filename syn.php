@@ -74,7 +74,7 @@ function main($argv)
   $file = "";
   $handle = $args->getInputFile();
   while(($line = fgets($handle)) !== false) {
-    $file.= htmlspecialchars($line, ENT_NOQUOTES);
+    $file.= $line;
   }
 
 
@@ -84,7 +84,7 @@ function main($argv)
   if($args->getFormatFile() !== null) {
     try
     {
-      $out = $sourceFormatter->getSource();
+      $out = $sourceFormatter->getSource($args->isEscape());
     }
     catch(Exception $e)
     {
@@ -96,11 +96,6 @@ function main($argv)
   //validace html znacek
   if($args->isValidate()) {
     $out = HtmlParser::validate($out);
-  }
-
-  //prevedeni html znacek zpet, v pripade ze nemaji byt escapovany
-  if(!$args->isEscape()) {
-    $out = htmlspecialchars_decode($out, ENT_NOQUOTES);
   }
 
   //vlozeni html novych radku

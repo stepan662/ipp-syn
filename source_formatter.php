@@ -7,13 +7,14 @@
  *
  * @author stepan
  */
-include_once 'html_inserter.php';
+include_once 'format_mark.php';
 
 class SourceFormatter
 {
 
   private $format;
   private $in;
+  private $marks = array();
 
   /**
    * Nastavime formatovaci a vstupni soubor
@@ -30,10 +31,11 @@ class SourceFormatter
    * Provede formatovani a vrati vysledek
    * @return string
    */
-  public function getSource()
+  public function getSource($escHtml)
   {
-    $out = $this->in;
-    $inserter = new HtmlInserter($out);
+    $marks = array();
+
+    $wave = 0;
 
     foreach($this->format as $fUnit) {
       //zachytime chybu privykonavani regularniho vyrazu
@@ -47,23 +49,77 @@ class SourceFormatter
       }
       error_reporting($errRep);
 
-      //vynulovani indexu inserteru
-      $inserter->resetCounters();
 
       //echo $fUnit->getRegExpr() . "\n";
       //projdeme vyhledane retezce a predame inserteru indexy
       if(isset($matches[0])) {
         foreach($matches[0] as $match) {
           if($match[0] != "") {
-            $inserter->insert($fUnit, $match[1], strlen($match[0]));
+            $marks[] = new FormatMark($match[1], $wave, $fUnit->getFirstPart(), false);
+
+            $marks[] = new FormatMark($match[1] + strlen($match[0]), $wave, $fUnit->getSecondPart(), true);
           }
         }
       }
+
+      $wave++;
+    }
+
+    uasort($marks, "self::cmpMark");
+
+
+    $out = "";
+
+    $in = str_split($this->in);
+    $index = 0;
+    foreach($marks as $mark) {
+      while($mark->index > $index) {
+        if($escHtml) {
+          $out.=self::escapeChar($in[$index]);
+        }
+        else {
+          $out.=$in[$index];
+        }
+        $index++;
+      }
+      $out.=$mark->mark;
+    }
+    while($index < count($in)) {
+      if($escHtml) {
+        $out.=self::escapeChar($in[$index]);
+      }
+      else {
+        $out.=$in[$index];
+      }
+      $index++;
     }
 
 
-
     return $out;
+  }
+
+  //rozhodne poradi dvou znacek podle indexu, vlny a unkocovani
+  static function cmpMark($a, $b)
+  {
+    if($a->index == $b->index) {
+      if($a->isEnd !== $b->isEnd) {
+        return $a->isEnd ? -1 : 1;
+      }
+      elseif($a->isEnd === false) {
+        return $a->wave < $b->wave ? -1 : 1;
+      }
+      else {
+        return $a->wave < $b->wave ? 1 : -1;
+      }
+    }
+    else {
+      return $a->index < $b->index ? -1 : 1;
+    }
+  }
+
+  static function escapeChar($char)
+  {
+    return htmlspecialchars($char, ENT_NOQUOTES);
   }
 
 }
