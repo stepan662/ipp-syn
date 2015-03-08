@@ -17,10 +17,15 @@ final class FormatFileParser
     $ret = array();
     while(($line = fgets($format_file)) !== false) {
       $tab = 0;
+      if($line == "\n") {
+        continue;
+      }
+      
       if(($tab = strpos($line, "\t")) === false) {
         //radek neobsahuje tabulator
         throw new Exception("Unknown format of format file", 4);
       }
+      
       $expr = substr($line, 0, $tab);
       $html = substr($line, $tab + 1);
       //echo "'$expr' '$html'\n";
@@ -49,6 +54,8 @@ final class FormatFileParser
       "+" => "+",
       "(" => "(",
       ")" => ")",
+      "!" => "!",
+      "%" => "%"
     );
 
     //operatory
