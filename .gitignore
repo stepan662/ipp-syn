@@ -4,3 +4,5 @@ html/
 latex/
 /in
 /format
+/is_it_ok.sh
+*.zip
