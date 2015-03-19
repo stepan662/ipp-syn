@@ -4,6 +4,6 @@ html/
 latex/
 /in
 /format
-/idea
+/.idea
 /is_it_ok.sh
 *.zip
