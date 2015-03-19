@@ -36,6 +36,9 @@ final class FormatFileParser
 
       $ret[] = new FormatUnit($expr, $html);
     }
+
+    //var_dump($ret);
+    //exit();
     return $ret;
   }
 
@@ -46,8 +49,12 @@ final class FormatFileParser
    */
   private static function parseRegExpr($expr)
   {
+
+    if(strpos($expr, "()") !== false) {
+      throw new Exception("Brackets can't be empty", 4);
+    }
     //tabulka prevodu meta znaku na obvyklou syntax
-    $meta = array(
+    static $meta = array(
       "." => "",
       "|" => "|",
       "*" => "*",
@@ -59,15 +66,16 @@ final class FormatFileParser
     );
 
     //operatory
-    $operators = array(
+    static $operators = array(
       "." => "",
       "|" => "|",
       "*" => "*",
       "+" => "+",
+      "!" => ""
     );
 
     //znaky, ktere maji specialni vyznam
-    $escape = array(
+    static $escape = array(
       "." => true,
       "|" => true,
       "*" => true,
@@ -87,7 +95,7 @@ final class FormatFileParser
     );
 
     //znaky, ktere maji specialni vyznam pri escapovani (ze zadani)
-    $special = array(
+    static $special = array(
       "s" => "\s",
       "a" => "\s\S",
       "d" => "0-9",
@@ -183,9 +191,12 @@ final class FormatFileParser
             $state = "negChar";
             $ret.="[^";
           }
-          else {
+          else if(!isset($operators[$char])){
             $state = "charOperator";
             $ret.="[^" . self::esc($char) . "]";
+          }
+          else {
+            throw new Exception("Operator after negation", 4);
           }
           break;
 

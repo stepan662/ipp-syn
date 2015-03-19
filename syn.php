@@ -54,6 +54,7 @@ function main($argv)
   }
 
 
+
   //zpracovani formatovaciho souboru
   //v regularnich vyrazech jsou take escapovany html znacky
   $formatArr = array();
